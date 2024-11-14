@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Info</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #4CAF50; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .nested-table { margin: 0; width: 100%; border: none; }
+        .nested-table th, .nested-table td { border: none; padding: 4px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <h1>Last 5 Requests</h1>
+    <button onclick="fetchRequests()">Refresh</button>
+    <table id="requests-table">
+        <thead>
+            <tr>
+                <th>Method</th>
+                <th>URL</th>
+                <th>Client IP</th>
+                <th>Headers</th>
+                <th>Cookies</th>
+                <th>Query Params</th>
+                <th>Body</th> <!-- Новый столбец для тела запроса -->
+            </tr>
+        </thead>
+        <tbody id="requests-body">
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchRequests() {
+            const response = await fetch("/requests");
+            const data = await response.json();
+            
+            const tableBody = document.getElementById("requests-body");
+            tableBody.innerHTML = "";
+            
+            data.last_5_requests.forEach(request => {
+                const row = document.createElement("tr");
+
+                const methodCell = document.createElement("td");
+                methodCell.textContent = request.method;
+                row.appendChild(methodCell);
+
+                const urlCell = document.createElement("td");
+                urlCell.textContent = request.url;
+                row.appendChild(urlCell);
+
+                const clientCell = document.createElement("td");
+                clientCell.textContent = request.client;
+                row.appendChild(clientCell);
+
+                const headersCell = document.createElement("td");
+                const headersTable = document.createElement("table");
+                headersTable.classList.add("nested-table");
+
+                Object.entries(request.headers).forEach(([key, value]) => {
+                    const headerRow = document.createElement("tr");
+                    const keyCell = document.createElement("td");
+                    keyCell.textContent = key;
+                    const valueCell = document.createElement("td");
+                    valueCell.textContent = value;
+                    headerRow.appendChild(keyCell);
+                    headerRow.appendChild(valueCell);
+                    headersTable.appendChild(headerRow);
+                });
+
+                headersCell.appendChild(headersTable);
+                row.appendChild(headersCell);
+
+                const cookiesCell = document.createElement("td");
+                cookiesCell.textContent = JSON.stringify(request.cookies);
+                row.appendChild(cookiesCell);
+
+                const queryParamsCell = document.createElement("td");
+                queryParamsCell.textContent = JSON.stringify(request.query_params) || "None";
+                row.appendChild(queryParamsCell);
+
+                const bodyCell = document.createElement("td");
+                // Если тело запроса не пустое, отображаем его
+                bodyCell.textContent = request.body ? JSON.stringify(request.body, null, 2) : "";
+                row.appendChild(bodyCell);
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        fetchRequests();
+    </script>
+</body>
+</html>
